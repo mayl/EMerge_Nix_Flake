@@ -111,8 +111,12 @@
             ];
             # gmsh (bundled in the emerge-env wheel) needs several OpenGL/X11 libs
             # at runtime that are not bundled in the wheel.
+            # EMERGE_PARDISO_PATH points directly to the MKL library shipped in the
+            # pip wheel, bypassing the filesystem-walk+cache that would otherwise
+            # try to write to the read-only Nix store.
             shellHook = ''
               export LD_LIBRARY_PATH="${pkgs.libGLU}/lib:${pkgs.libGL}/lib:${pkgs.libxcursor}/lib:${pkgs.libxfixes}/lib:${pkgs.libxft}/lib:${pkgs.fontconfig.lib}/lib:${pkgs.libxinerama}/lib:$LD_LIBRARY_PATH"
+              export EMERGE_PARDISO_PATH="${self'.packages.emerge-env}/lib/libmkl_rt.so.2"
             '';
           };
         };
