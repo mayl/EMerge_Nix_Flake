@@ -108,6 +108,7 @@
             packages = [
               self'.packages.emerge-env
               pkgs.uv
+              python.pkgs.pyqt5
             ];
             # gmsh (bundled in the emerge-env wheel) needs several OpenGL/X11 libs
             # at runtime that are not bundled in the wheel.
@@ -115,7 +116,9 @@
             # pip wheel, bypassing the filesystem-walk+cache that would otherwise
             # try to write to the read-only Nix store.
             shellHook = ''
-              export LD_LIBRARY_PATH="${pkgs.libGLU}/lib:${pkgs.libGL}/lib:${pkgs.libxcursor}/lib:${pkgs.libxfixes}/lib:${pkgs.libxft}/lib:${pkgs.fontconfig.lib}/lib:${pkgs.libxinerama}/lib:$LD_LIBRARY_PATH"
+              export LD_LIBRARY_PATH="${pkgs.libGLU}/lib:${pkgs.libGL}/lib:${pkgs.libxcursor}/lib:${pkgs.libxfixes}/lib:${pkgs.libxft}/lib:${pkgs.fontconfig.lib}/lib:${pkgs.libxinerama}/lib:${pkgs.qt5.qtbase}/lib:${pkgs.libxkbcommon}/lib:$LD_LIBRARY_PATH"
+              export QT_QPA_PLATFORM_PLUGIN_PATH="${pkgs.qt5.qtbase.bin}/lib/qt-${pkgs.qt5.qtbase.version}/plugins/platforms"
+              export PYTHONPATH="${python.pkgs.pyqt5}/${python.sitePackages}:$PYTHONPATH"
               export EMERGE_PARDISO_PATH="${self'.packages.emerge-env}/lib/libmkl_rt.so.2"
             '';
           };
