@@ -97,28 +97,20 @@
             lib.composeManyExtensions [
               inputs.pyproject-build-systems.overlays.default
               workspaceOverlay
-              # emsutil is a path dependency (../emsutil) in EMerge's uv.lock,
-              # so we redirect its source to the flake input and supply hatchling
-              # (declared in emsutil's [build-system] but not auto-resolved for
-              # path-sourced packages).
               (final: prev: {
+                # emsutil: path dependency in EMerge's uv.lock; redirect source to
+                # the flake input and supply hatchling (declared in emsutil's
+                # [build-system] but not auto-resolved for path-sourced packages).
                 emsutil = prev.emsutil.overrideAttrs (old: {
                   src = inputs.emsutil-src;
                   nativeBuildInputs = (old.nativeBuildInputs or []) ++ final.resolveBuildSystem {
                     hatchling = [];
                   };
                 });
-              })
-
-              # scikit-umfpack ships as an sdist only and must be compiled against
-              # SuiteSparse (provides UMFPACK headers + libumfpack.so).
-              # meson-python is the build backend but isn't declared in its manifest,
-              # so we supply it (and meson/ninja/pkg-config/swig) explicitly.
-              # SuiteSparse 7.x ships real pkg-config files, so dependency('UMFPACK')
-              # succeeds and meson_swig.py can find umfpack_dep in
-              # intro-dependencies.json.  It also uses the unified single umfpack.h,
-              # which matches scikit-umfpack's single_header=true code path.
-              (final: prev: {
+                # scikit-umfpack: sdist-only; compiled against our SuiteSparse build
+                # (UMFPACK headers + libumfpack.so).  meson-python is the build
+                # backend but isn't declared in its manifest, so we supply it along
+                # with meson/ninja/pkg-config/swig explicitly.
                 scikit-umfpack = prev.scikit-umfpack.overrideAttrs (old: {
                   nativeBuildInputs = (old.nativeBuildInputs or []) ++
                     final.resolveBuildSystem { "meson-python" = []; } ++
