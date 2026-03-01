@@ -135,7 +135,25 @@
         "nixpkgs": "nixpkgs",
         "pyproject-build-systems": "pyproject-build-systems",
         "pyproject-nix": "pyproject-nix",
+        "suitesparse-src": "suitesparse-src",
         "uv2nix": "uv2nix"
+      }
+    },
+    "suitesparse-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1770747951,
+        "narHash": "sha256-reR23aBs3rdNdDYpjuN6XbAmrBZ1euFsKreBdPI//gI=",
+        "owner": "DrTimothyAldenDavis",
+        "repo": "SuiteSparse",
+        "rev": "42151688813c45846a597edcb601435a0e38f3dd",
+        "type": "github"
+      },
+      "original": {
+        "owner": "DrTimothyAldenDavis",
+        "ref": "v7.12.2",
+        "repo": "SuiteSparse",
+        "type": "github"
       }
     },
     "uv2nix": {
