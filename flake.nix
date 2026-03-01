@@ -63,6 +63,32 @@
             lib.composeManyExtensions [
               inputs.pyproject-build-systems.overlays.default
               workspaceOverlay
+              # emsutil is a path dependency (../emsutil) in EMerge's uv.lock,
+              # so we redirect its source to the flake input and supply hatchling
+              # (declared in emsutil's [build-system] but not auto-resolved for
+              # path-sourced packages).
+              (final: prev: {
+                emsutil = prev.emsutil.overrideAttrs (old: {
+                  src = inputs.emsutil-src;
+                  nativeBuildInputs = (old.nativeBuildInputs or []) ++ final.resolveBuildSystem {
+                    hatchling = [];
+                  };
+                });
+              })
+
+              # The Intel oneAPI wheel stack (mkl, tbb, umf, intel-cmplr-lib-ur,
+              # tcmlib, intel-openmp, …) ships optional GPU/Level-Zero/OpenCL
+              # adapters that all link against each other and against libhwloc,
+              # libOpenCL, etc.  We don't carry any of those system libs, so we
+              # tell autoPatchelf to ignore missing native deps across the board.
+              # The CPU-only paths (BLAS, MKL, LAPACK) are unaffected.
+              (_final: prev:
+                lib.mapAttrs (_: pkg:
+                  if pkg ? overrideAttrs
+                  then pkg.overrideAttrs (_: { autoPatchelfIgnoreMissingDeps = true; })
+                  else pkg
+                ) prev
+              )
             ]
           );
         in
@@ -79,9 +105,15 @@
           };
 
           devShells.default = pkgs.mkShell {
-            packages = with pkgs; [
-              uv
+            packages = [
+              self'.packages.emerge-env
+              pkgs.uv
             ];
+            # gmsh (bundled in the emerge-env wheel) needs several OpenGL/X11 libs
+            # at runtime that are not bundled in the wheel.
+            shellHook = ''
+              export LD_LIBRARY_PATH="${pkgs.libGLU}/lib:${pkgs.libGL}/lib:${pkgs.libxcursor}/lib:${pkgs.libxfixes}/lib:${pkgs.libxft}/lib:${pkgs.fontconfig.lib}/lib:${pkgs.libxinerama}/lib:$LD_LIBRARY_PATH"
+            '';
           };
         };
     };
