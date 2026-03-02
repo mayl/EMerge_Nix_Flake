@@ -3,11 +3,11 @@
     "emerge-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1772198315,
-        "narHash": "sha256-PlqPiG47eC/zCVQrM43IRRZFt2tzqjfvoQCYdiEmNoc=",
+        "lastModified": 1772476804,
+        "narHash": "sha256-nhy3UAXE7bdLHkdRyi4JiWmUSv8tnu657IxRZo1ilKc=",
         "owner": "FennisRobert",
         "repo": "EMerge",
-        "rev": "a9937490db8b4d6da485d4f09b532c1b054a09a3",
+        "rev": "e68d07690bcb42bf24996a5c2dff043fe6bd145f",
         "type": "github"
       },
       "original": {
