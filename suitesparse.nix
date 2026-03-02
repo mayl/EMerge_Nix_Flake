@@ -1,4 +1,10 @@
-{ stdenv, cmake, pkg-config, openblas, src }:
+{
+  stdenv,
+  cmake,
+  pkg-config,
+  openblas,
+  src,
+}:
 
 # SuiteSparse 7.x built from source: ships real pkg-config files and
 # uses the single unified umfpack.h, which is what scikit-umfpack 0.4.2
@@ -7,7 +13,10 @@ stdenv.mkDerivation {
   pname = "suitesparse";
   version = "7.12.2";
   inherit src;
-  nativeBuildInputs = [ cmake pkg-config ];
+  nativeBuildInputs = [
+    cmake
+    pkg-config
+  ];
   buildInputs = [ openblas ];
   cmakeFlags = [
     "-DSUITESPARSE_USE_CUDA=OFF"

@@ -33,11 +33,26 @@
     };
   };
 
-  outputs = inputs @ { flake-parts, ... }:
+  outputs =
+    inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "x86_64-darwin" "aarch64-darwin" ];
+      systems = [
+        "x86_64-linux"
+        "aarch64-linux"
+        "x86_64-darwin"
+        "aarch64-darwin"
+      ];
 
-      perSystem = { config, self', inputs', pkgs, lib, system, ... }:
+      perSystem =
+        {
+          config,
+          self',
+          inputs',
+          pkgs,
+          lib,
+          system,
+          ...
+        }:
         let
           # Load the uv workspace for EMerge
           workspace = inputs.uv2nix.lib.workspace.loadWorkspace {
@@ -73,20 +88,28 @@
                 # [build-system] but not auto-resolved for path-sourced packages).
                 emsutil = prev.emsutil.overrideAttrs (old: {
                   src = inputs.emsutil-src;
-                  nativeBuildInputs = (old.nativeBuildInputs or []) ++ final.resolveBuildSystem {
-                    hatchling = [];
-                  };
+                  nativeBuildInputs =
+                    (old.nativeBuildInputs or [ ])
+                    ++ final.resolveBuildSystem {
+                      hatchling = [ ];
+                    };
                 });
                 # scikit-umfpack: sdist-only; compiled against our SuiteSparse build
                 # (UMFPACK headers + libumfpack.so).  meson-python is the build
                 # backend but isn't declared in its manifest, so we supply it along
                 # with meson/ninja/pkg-config/swig explicitly.
                 scikit-umfpack = prev.scikit-umfpack.overrideAttrs (old: {
-                  nativeBuildInputs = (old.nativeBuildInputs or []) ++
-                    final.resolveBuildSystem { "meson-python" = []; } ++
-                    [ pkgs.meson pkgs.ninja pkgs.pkg-config pkgs.swig
-                      final.numpy ];
-                  buildInputs = (old.buildInputs or []) ++ [ self'.packages.suitesparse ];
+                  nativeBuildInputs =
+                    (old.nativeBuildInputs or [ ])
+                    ++ final.resolveBuildSystem { "meson-python" = [ ]; }
+                    ++ [
+                      pkgs.meson
+                      pkgs.ninja
+                      pkgs.pkg-config
+                      pkgs.swig
+                      final.numpy
+                    ];
+                  buildInputs = (old.buildInputs or [ ]) ++ [ self'.packages.suitesparse ];
                 });
               })
 
@@ -96,11 +119,16 @@
               # libOpenCL, etc.  We don't carry any of those system libs, so we
               # tell autoPatchelf to ignore missing native deps across the board.
               # The CPU-only paths (BLAS, MKL, LAPACK) are unaffected.
-              (_final: prev:
-                lib.mapAttrs (_: pkg:
-                  if pkg ? overrideAttrs
-                  then pkg.overrideAttrs (_: { autoPatchelfIgnoreMissingDeps = true; })
-                  else pkg
+              (
+                _final: prev:
+                lib.mapAttrs (
+                  _: pkg:
+                  if pkg ? overrideAttrs then
+                    pkg.overrideAttrs (_: {
+                      autoPatchelfIgnoreMissingDeps = true;
+                    })
+                  else
+                    pkg
                 ) prev
               )
             ]
@@ -117,12 +145,15 @@
 
             # Virtual environment for direct use, with the umfpack optional extra
             # so that scikit-umfpack is included alongside the default deps.
-            emerge-env = pythonSet.mkVirtualEnv "emerge-env"
-              (workspace.deps.default // { emerge = [ "umfpack" ]; });
+            emerge-env = pythonSet.mkVirtualEnv "emerge-env" (
+              workspace.deps.default // { emerge = [ "umfpack" ]; }
+            );
 
             # Default output
             default = self'.packages.emerge;
           };
+
+          formatter = pkgs.nixfmt-tree;
 
           devShells.default = pkgs.mkShell {
             packages = [
@@ -136,11 +167,20 @@
             # pip wheel, bypassing the filesystem-walk+cache that would otherwise
             # try to write to the read-only Nix store.
             shellHook = ''
-              export LD_LIBRARY_PATH="${lib.makeLibraryPath [
-                pkgs.libGLU pkgs.libGL pkgs.libxcursor pkgs.libxfixes pkgs.libxft
-                pkgs.fontconfig.lib pkgs.libxinerama pkgs.qt5.qtbase pkgs.libxkbcommon
-                self'.packages.suitesparse
-              ]}:$LD_LIBRARY_PATH"
+              export LD_LIBRARY_PATH="${
+                lib.makeLibraryPath [
+                  pkgs.libGLU
+                  pkgs.libGL
+                  pkgs.libxcursor
+                  pkgs.libxfixes
+                  pkgs.libxft
+                  pkgs.fontconfig.lib
+                  pkgs.libxinerama
+                  pkgs.qt5.qtbase
+                  pkgs.libxkbcommon
+                  self'.packages.suitesparse
+                ]
+              }:$LD_LIBRARY_PATH"
               export QT_QPA_PLATFORM_PLUGIN_PATH="${pkgs.qt5.qtbase.bin}/lib/qt-${pkgs.qt5.qtbase.version}/plugins/platforms"
               export PYTHONPATH="${python.pkgs.pyqt5}/${python.sitePackages}:$PYTHONPATH"
               export EMERGE_PARDISO_PATH="${self'.packages.emerge-env}/lib/libmkl_rt.so.2"
