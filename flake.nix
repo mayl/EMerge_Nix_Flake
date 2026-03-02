@@ -43,6 +43,13 @@
         "aarch64-darwin"
       ];
 
+      flake = {
+        templates.default = {
+          path = ./template;
+          description = "EMerge EM simulation starter";
+        };
+      };
+
       perSystem =
         {
           config,
@@ -148,6 +155,33 @@
             emerge-env = pythonSet.mkVirtualEnv "emerge-env" (
               workspace.deps.default // { emerge = [ "umfpack" ]; }
             );
+
+            # Python interpreter wrapped with all runtime env vars needed to run
+            # EMerge simulations (library paths, Qt, PyQt5, MKL).
+            # Pass a simulation script as the first argument: nix run .#run-emerge-simulation -- sim.py
+            run-emerge-simulation = pkgs.writeShellApplication {
+              name = "run-emerge-simulation";
+              runtimeEnv = {
+                LD_LIBRARY_PATH = lib.makeLibraryPath [
+                  pkgs.libGLU
+                  pkgs.libGL
+                  pkgs.libxcursor
+                  pkgs.libxfixes
+                  pkgs.libxft
+                  pkgs.fontconfig.lib
+                  pkgs.libxinerama
+                  pkgs.qt5.qtbase
+                  pkgs.libxkbcommon
+                  self'.packages.suitesparse
+                ];
+                QT_QPA_PLATFORM_PLUGIN_PATH = "${pkgs.qt5.qtbase.bin}/lib/qt-${pkgs.qt5.qtbase.version}/plugins/platforms";
+                PYTHONPATH = "${python.pkgs.pyqt5}/${python.sitePackages}";
+                EMERGE_PARDISO_PATH = "${self'.packages.emerge-env}/lib/libmkl_rt.so.2";
+              };
+              text = ''
+                exec ${self'.packages.emerge-env}/bin/python "$@"
+              '';
+            };
 
             # Default output
             default = self'.packages.emerge;
