@@ -44,6 +44,9 @@
           # emerge.extraDeps = {
           #   "extra-package" = [ ];
           # };
+
+          # Uncomment to add extra programs to the devshell:
+          # emerge.extraPackages = [ pkgs.ripgrep pkgs.jq ];
         };
     };
 }

@@ -136,6 +136,11 @@ in
             Extra packages to include in emerge-env: { "package-name" = [ extras ]; }
           '';
         };
+        extraPackages = lib.mkOption {
+          type = lib.types.listOf lib.types.package;
+          default = [ ];
+          description = "Extra nixpkgs packages to add to devShells.default";
+        };
       };
 
       config = {
@@ -170,7 +175,8 @@ in
             emerge-env
             pkgs.uv
             python.pkgs.pyqt5
-          ];
+          ]
+          ++ cfg.extraPackages;
           # gmsh (bundled in the emerge-env wheel) needs several OpenGL/X11 libs
           # at runtime that are not bundled in the wheel.
           # EMERGE_PARDISO_PATH points directly to the MKL library shipped in the
