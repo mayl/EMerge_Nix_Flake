@@ -13,6 +13,8 @@
   outputs =
     inputs@{ flake-parts, ... }:
     flake-parts.lib.mkFlake { inherit inputs; } {
+      imports = [ inputs.emerge-flake.flakeModules.default ];
+
       systems = [
         "x86_64-linux"
         "aarch64-linux"
@@ -23,26 +25,25 @@
       perSystem =
         {
           self',
-          inputs',
           pkgs,
           lib,
           ...
         }:
         {
-          packages = {
-            # Run the simulation: nix run
-            default = pkgs.writeShellScriptBin "run-simulation" ''
-              exec ${lib.getExe inputs'.emerge-flake.packages.run-emerge-simulation} ${./simulation.py} "$@"
-            '';
-            inherit (inputs'.emerge-flake.packages)
-              emerge-env
-              emerge
-              suitesparse
-              run-emerge-simulation
-              ;
-          };
+          # Run the simulation: nix run
+          packages.default = pkgs.writeShellScriptBin "run-simulation" ''
+            exec ${lib.getExe self'.packages.run-emerge-simulation} ${./simulation.py} "$@"
+          '';
 
-          devShells.default = inputs'.emerge-flake.devShells.default;
+          # Uncomment to add extra packages to the Python environment:
+          # emerge.pythonOverlay = final: prev: {
+          #   my-package = final.callPackage ./my-package.nix { };
+          # };
+
+          # Uncomment to include extra packages in the venv:
+          # emerge.extraDeps = {
+          #   "extra-package" = [ ];
+          # };
         };
     };
 }
