@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-A Nix flake packaging the [EMerge](https://github.com/FennisRobert/EMerge) Python EM simulation library with a custom-built SuiteSparse/UMFPACK solver. Not all EMerge solvers are supported — only UMFPACK.
+A Nix flake packaging the [EMerge](https://github.com/FennisRobert/EMerge) Python EM simulation library. Supported solvers: UMFPACK (custom-built SuiteSparse derivation) and Pardiso (Intel MKL from the Intel oneAPI wheel stack bundled in the venv; `EMERGE_PARDISO_PATH` is pre-set to `libmkl_rt.so.2`).
 
 ## Common Commands
 

@@ -30,23 +30,31 @@
           ...
         }:
         {
-          # Run the simulation: nix run
+          # `nix run` executes simulation.py inside the EMerge virtualenv with all
+          # required environment variables (OpenGL, Qt, MKL) pre-set.
           packages.default = pkgs.writeShellScriptBin "run-simulation" ''
             exec ${lib.getExe self'.packages.run-emerge-simulation} ${./simulation.py} "$@"
           '';
 
-          # Uncomment to add extra packages to the Python environment:
+          # --- Customisation options ---------------------------------------------------
+
+          # Add packages that are already in EMerge's lockfile to the virtualenv.
+          # Keys are package names from uv.lock; values are lists of optional extras.
+          # emerge.extraDeps = {
+          #   "matplotlib" = [ ];
+          #   "scipy" = [ ];
+          #   "some-package" = [ "extra" ];
+          # };
+
+          # Inject Python packages that are NOT in EMerge's lockfile.
+          # After adding a package here, also list it in extraDeps to include it in
+          # the venv.
           # emerge.pythonOverlay = final: prev: {
           #   my-package = final.callPackage ./my-package.nix { };
           # };
 
-          # Uncomment to include extra packages in the venv:
-          # emerge.extraDeps = {
-          #   "extra-package" = [ ];
-          # };
-
-          # Uncomment to add extra programs to the devshell:
-          # emerge.extraPackages = [ pkgs.ripgrep pkgs.jq ];
+          # Add extra programs (not Python libraries) to devShells.default.
+          # emerge.extraPackages = [ pkgs.ripgrep pkgs.gnuplot ];
         };
     };
 }
