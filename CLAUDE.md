@@ -26,7 +26,7 @@ python EMerge_2_0_Example_Pack/examples/demo0_parallel_plate.py  # ~1 min due to
 
 Two source files define everything:
 
-- **`flake.nix`** — builds the Python package set using `uv2nix` against EMerge's `uv.lock`, applies overlays for `emsutil` (path dep redirected to flake input), `scikit-umfpack` (compiled against our SuiteSparse), and the Intel oneAPI wheel stack (GPU adapters don't need patching). The `emerge-env` output is a virtualenv with the `umfpack` optional extra included.
+- **`flake.nix`** — builds the Python package set using `uv2nix` against EMerge's `uv.lock`, applies overlays for `scikit-umfpack` (compiled against our SuiteSparse) and the Intel oneAPI wheel stack (GPU adapters don't need patching). The `emerge-env` output is a virtualenv with the `umfpack` optional extra included.
 - **`suitesparse.nix`** — builds SuiteSparse 7.12.2 from source using CMake, enabling only the UMFPACK subset (suitesparse_config, amd, camd, colamd, ccolamd, cholmod, umfpack).
 
 ## Critical: nixpkgs openblas ILP64 Hack

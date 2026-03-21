@@ -23,10 +23,6 @@
       url = "github:FennisRobert/EMerge";
       flake = false;
     };
-    emsutil-src = {
-      url = "github:FennisRobert/emsutil";
-      flake = false;
-    };
     suitesparse-src = {
       url = "github:DrTimothyAldenDavis/SuiteSparse/v7.12.2";
       flake = false;

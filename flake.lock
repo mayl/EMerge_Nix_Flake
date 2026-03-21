@@ -16,22 +16,6 @@
         "type": "github"
       }
     },
-    "emsutil-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1773066016,
-        "narHash": "sha256-CtPppyNnpo6wFmX75iigma3c+sBWx3X/V3FwhQE0GSI=",
-        "owner": "FennisRobert",
-        "repo": "emsutil",
-        "rev": "4636a749a519fe4090c4a7adbbbaa7eaf5a77d15",
-        "type": "github"
-      },
-      "original": {
-        "owner": "FennisRobert",
-        "repo": "emsutil",
-        "type": "github"
-      }
-    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": "nixpkgs-lib"
@@ -130,7 +114,6 @@
     "root": {
       "inputs": {
         "emerge-src": "emerge-src",
-        "emsutil-src": "emsutil-src",
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs",
         "pyproject-build-systems": "pyproject-build-systems",
