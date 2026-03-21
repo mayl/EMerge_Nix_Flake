@@ -45,17 +45,6 @@ in
           emerge-inputs.pyproject-build-systems.overlays.default
           workspaceOverlay
           (final: prev: {
-            # emsutil: path dependency in EMerge's uv.lock; redirect source to
-            # the flake input and supply hatchling (declared in emsutil's
-            # [build-system] but not auto-resolved for path-sourced packages).
-            emsutil = prev.emsutil.overrideAttrs (old: {
-              src = emerge-inputs.emsutil-src;
-              nativeBuildInputs =
-                (old.nativeBuildInputs or [ ])
-                ++ final.resolveBuildSystem {
-                  hatchling = [ ];
-                };
-            });
             # scikit-umfpack: sdist-only; compiled against our SuiteSparse build
             # (UMFPACK headers + libumfpack.so).  meson-python is the build
             # backend but isn't declared in its manifest, so we supply it along
