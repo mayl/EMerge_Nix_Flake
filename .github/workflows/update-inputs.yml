@@ -13,10 +13,27 @@ jobs:
   update:
     name: Update flake inputs
     runs-on: ubuntu-latest
+    outputs:
+      pr-head-sha: ${{ steps.update.outputs.pull-request-head-sha }}
     steps:
       - uses: actions/checkout@v4
       - uses: DeterminateSystems/nix-installer-action@v16
       - uses: DeterminateSystems/update-flake-lock@v23
+        id: update
         with:
           pr-title: 'chore: update flake inputs'
           pr-labels: dependencies
+
+  build:
+    name: Build
+    needs: update
+    if: needs.update.outputs.pr-head-sha != ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.update.outputs.pr-head-sha }}
+      - uses: DeterminateSystems/nix-installer-action@v16
+      - uses: DeterminateSystems/magic-nix-cache-action@v8
+      - run: nix build .#suitesparse
+      - run: nix build .#emerge-env
