@@ -61,6 +61,14 @@ in
                   final.numpy
                 ];
               buildInputs = (old.buildInputs or [ ]) ++ [ cfg.suitesparse ];
+              # GCC 14+ promotes -Wint-conversion (and siblings) from warning to
+              # a hard error by default.  The SWIG-generated _umfpack_wrap.c calls
+              # the numpy import_array() macro from an int-returning function,
+              # which trips -Wint-conversion.  Demote these back to warnings so the
+              # legacy generated source still compiles.
+              NIX_CFLAGS_COMPILE =
+                (old.NIX_CFLAGS_COMPILE or "")
+                + " -Wno-error=int-conversion -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration";
             });
           })
           # The Intel oneAPI wheel stack (mkl, tbb, umf, intel-cmplr-lib-ur,
