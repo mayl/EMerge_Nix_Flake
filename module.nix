@@ -25,12 +25,16 @@ in
         workspaceRoot = emerge-inputs.emerge-src;
       };
 
-      python = lib.head (
+      # First nixpkgs interpreter satisfying EMerge's requires-python; overridable via
+      # emerge.python (e.g. when extra packages need a newer Python).
+      defaultPython = lib.head (
         emerge-inputs.pyproject-nix.lib.util.filterPythonInterpreters {
           inherit (workspace) requires-python;
           inherit (pkgs) pythonInterpreters;
         }
       );
+
+      python = cfg.python;
 
       pythonBase = pkgs.callPackage emerge-inputs.pyproject-nix.build.packages {
         inherit python;
@@ -121,8 +125,26 @@ in
           type = lib.types.package;
           description = "SuiteSparse package to link scikit-umfpack against";
         };
+        python = lib.mkOption {
+          type = lib.types.package;
+          default = defaultPython;
+          defaultText = lib.literalMD "the first interpreter in `pkgs.pythonInterpreters` satisfying EMerge's `requires-python`";
+          example = lib.literalExpression "pkgs.python312";
+          description = ''
+            Python interpreter used to build emerge-env. Must satisfy EMerge's
+            requires-python (see its pyproject.toml).
+          '';
+        };
         pythonOverlay = lib.mkOption {
-          type = lib.types.anything;
+          # Not types.anything: that merges by applying the function and
+          # deep-inspecting the resulting package set, which forces `final` and
+          # recurses infinitely. Multiple definitions compose in order.
+          type = lib.mkOptionType {
+            name = "pythonOverlay";
+            description = "pyproject-nix overlay (final: prev: { ... })";
+            check = lib.isFunction;
+            merge = _loc: defs: lib.composeManyExtensions (map (d: d.value) defs);
+          };
           default = _: _: { };
           description = "pyproject-nix overlay to extend the Python package set";
         };
