@@ -20,7 +20,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     emerge-src = {
-      url = "github:FennisRobert/EMerge";
+      url = "github:FennisRobert/EMerge/v2.8.9";
       flake = false;
     };
     suitesparse-src = {
