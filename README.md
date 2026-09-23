@@ -94,6 +94,19 @@ The keys must be package names that already appear in EMerge's `uv.lock`. This o
 selects packages from the existing locked set — it does not pull in packages from outside the
 lockfile. To add entirely new packages, use `pythonOverlay` instead.
 
+### `emerge.python` — choose the Python interpreter
+
+By default the venv uses the first interpreter in `pkgs.pythonInterpreters` that satisfies
+EMerge's `requires-python`. Override it when extra packages need a newer Python:
+
+```nix
+perSystem = { pkgs, ... }: {
+  emerge.python = pkgs.python312;
+};
+```
+
+The interpreter must still satisfy EMerge's `requires-python`.
+
 ### `emerge.pythonOverlay` — add new Python packages to the set
 
 Use a [pyproject-nix](https://pyproject-nix.github.io/pyproject.nix/) overlay to inject
