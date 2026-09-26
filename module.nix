@@ -117,7 +117,26 @@ in
       ];
       qtPluginPath = "${pkgs.qt5.qtbase.bin}/lib/qt-${pkgs.qt5.qtbase.version}/plugins/platforms";
       pythonPath = "${python.pkgs.pyqt5}/${python.sitePackages}";
-      pardissoPath = "${emerge-env}/lib/libmkl_rt.so.2";
+      # MKL's soname changes across releases (mkl 2025.x ships libmkl_rt.so.2,
+      # 2026.x ships libmkl_rt.so.3), and consumers can swap the mkl version via
+      # emerge.pythonOverlay.  Resolve whichever libmkl_rt.so.N the env actually
+      # contains at build time (no IFD) and expose it at a stable path.  The
+      # build fails if none is present, so a future layout change is caught at
+      # build/`nix flake check` time rather than at the first linear solve.
+      pardiso-lib = pkgs.runCommand "emerge-pardiso-lib" { } ''
+        lib=${emerge-env}/lib
+        target=$(ls "$lib"/libmkl_rt.so.* 2>/dev/null | sort -V | tail -n1 || true)
+        if [ -z "$target" ]; then
+          echo "error: no libmkl_rt.so.* found in $lib" >&2
+          echo "       (is mkl missing from emerge-env, or has its layout changed?)" >&2
+          exit 1
+        fi
+        mkdir -p $out/lib
+        ln -s "$(readlink -f "$target")" $out/lib/libmkl_rt.so
+        test -e $out/lib/libmkl_rt.so
+      '';
+      pardissoPath =
+        if cfg.pardissoPath != null then cfg.pardissoPath else "${pardiso-lib}/lib/libmkl_rt.so";
     in
     {
       options.emerge = {
@@ -155,6 +174,15 @@ in
             Extra packages to include in emerge-env: { "package-name" = [ extras ]; }
           '';
         };
+        pardissoPath = lib.mkOption {
+          type = lib.types.nullOr lib.types.str;
+          default = null;
+          example = lib.literalExpression ''"''${config.packages.emerge-env}/lib/libmkl_rt.so.3"'';
+          description = ''
+            Path exported as EMERGE_PARDISO_PATH. By default the highest
+            libmkl_rt.so.N found in emerge-env is resolved automatically.
+          '';
+        };
         extraPackages = lib.mkOption {
           type = lib.types.listOf lib.types.package;
           default = [ ];
@@ -167,6 +195,9 @@ in
         # The main flake overrides this at regular priority with self'.packages.suitesparse,
         # so inputs'.emerge-flake is never evaluated there (Nix lazy evaluation).
         emerge.suitesparse = lib.mkDefault inputs'.emerge-flake.packages.suitesparse;
+
+        # Fails if emerge-env contains no libmkl_rt.so.* (Pardiso would be broken).
+        checks.pardiso-lib = pardiso-lib;
 
         packages = {
           emerge = pythonSet.emerge;
