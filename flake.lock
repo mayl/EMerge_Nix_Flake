@@ -3,16 +3,16 @@
     "emerge-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1787518169,
-        "narHash": "sha256-2w6PZUT0gE50nZ9MfpFkGjx1UQJEqYso9Mm2rfJK08w=",
+        "lastModified": 1789484533,
+        "narHash": "sha256-gQTq/lWe2jhz16UhTtDpZ5WCLtC0ab4WAh/OBYpSGyE=",
         "owner": "FennisRobert",
         "repo": "EMerge",
-        "rev": "5f60a285ed7db556b9425c9b6dc72ebddb9bba95",
+        "rev": "6cdb1a8e48f8d47df385e135cca6bc682b5f3425",
         "type": "github"
       },
       "original": {
         "owner": "FennisRobert",
-        "ref": "v2.8.9",
+        "ref": "v3.0-dev",
         "repo": "EMerge",
         "type": "github"
       }

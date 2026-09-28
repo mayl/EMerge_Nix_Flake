@@ -20,7 +20,12 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     emerge-src = {
-      url = "github:FennisRobert/EMerge/v2.8.9";
+      # No final 3.0 release exists upstream: the `v3.0.0`/`v3.0.0b1` tags are
+      # stray version-string bumps on the 2.8.0 tree (see git log on those
+      # tags), not the 3.0 feature set. Real 3.0 work lives on this branch,
+      # currently at pre-release 3.0.0a15. Re-pin to a tag once upstream cuts
+      # one.
+      url = "github:FennisRobert/EMerge/v3.0-dev";
       flake = false;
     };
     suitesparse-src = {
