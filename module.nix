@@ -98,12 +98,21 @@ in
 
       pythonSet = basePythonSet.overrideScope cfg.pythonOverlay;
 
-      emerge-env = pythonSet.mkVirtualEnv "emerge-env" (
-        workspace.deps.default // { emerge = [ "umfpack" ]; } // cfg.extraDeps
-      );
+      # Runtime venv (run-emerge-simulation, run-emerge-headless) and the dev shell's venv:
+      # the same package set, the dev one adds cfg.devDeps. Without devDeps they are the
+      # same derivation.
+      runtimeDeps = workspace.deps.default // { emerge = [ "umfpack" ]; } // cfg.extraDeps;
+      emerge-env = pythonSet.mkVirtualEnv "emerge-env" runtimeDeps;
+      emerge-dev-env =
+        if cfg.devDeps == { } then
+          emerge-env
+        else
+          pythonSet.mkVirtualEnv "emerge-dev-env" (runtimeDeps // cfg.devDeps);
 
-      # Shared runtime environment — used by both run-emerge-simulation and devShells.default
-      ldLibraryPath = lib.makeLibraryPath [
+      # Libraries every EMerge process needs, GUI or not: the gmsh wheel's libgmsh links
+      # OpenGL/X11 (DT_NEEDED, mostly not on its rpath) even when only meshing, plus
+      # SuiteSparse. run-emerge-headless gets only these; the viewer adds Qt (guiLibraryPath).
+      headlessLibraryPath = lib.makeLibraryPath [
         pkgs.libGLU
         pkgs.libGL
         pkgs.libxcursor
@@ -111,10 +120,13 @@ in
         pkgs.libxft
         pkgs.fontconfig.lib
         pkgs.libxinerama
-        pkgs.qt5.qtbase
-        pkgs.libxkbcommon
         cfg.suitesparse
       ];
+      guiLibraryPath = lib.makeLibraryPath [
+        pkgs.qt5.qtbase
+        pkgs.libxkbcommon
+      ];
+      ldLibraryPath = "${headlessLibraryPath}:${guiLibraryPath}";
       qtPluginPath = "${pkgs.qt5.qtbase.bin}/lib/qt-${pkgs.qt5.qtbase.version}/plugins/platforms";
       pythonPath = "${python.pkgs.pyqt5}/${python.sitePackages}";
       # MKL's soname changes across releases (mkl 2025.x ships libmkl_rt.so.2,
@@ -193,6 +205,18 @@ in
             libmkl_rt.so.N found in emerge-env is resolved automatically.
           '';
         };
+        devDeps = lib.mkOption {
+          type = lib.types.attrsOf (lib.types.listOf lib.types.str);
+          default = { };
+          example = lib.literalExpression "{ pytest = [ ]; }";
+          description = ''
+            Python packages for the dev shell only (e.g. test tools): they go into
+            emerge-dev-env, the shell's venv, which is emerge-env plus these, built from the
+            same package set. emerge-env and the run-emerge-* runners don't get them. The
+            shell exports EMERGE_ENV (the emerge-env store path) so tools can name the
+            runtime environment their code was developed against.
+          '';
+        };
         extraPackages = lib.mkOption {
           type = lib.types.listOf lib.types.package;
           default = [ ];
@@ -212,6 +236,7 @@ in
         packages = {
           emerge = pythonSet.emerge;
           emerge-env = emerge-env;
+          emerge-dev-env = emerge-dev-env;
 
           # Python interpreter wrapped with all runtime env vars needed to run
           # EMerge simulations (library paths, Qt, PyQt5, MKL).
@@ -228,11 +253,24 @@ in
               exec ${emerge-env}/bin/python "$@"
             '';
           };
+
+          # The same interpreter for batch jobs: no Qt/PyQt5 (the viewer), so a closure
+          # without them, e.g. for cloud images. Same venv and core libraries as above.
+          run-emerge-headless = pkgs.writeShellApplication {
+            name = "run-emerge-headless";
+            runtimeEnv = {
+              LD_LIBRARY_PATH = headlessLibraryPath;
+              EMERGE_PARDISO_PATH = pardissoPath;
+            };
+            text = ''
+              exec ${emerge-env}/bin/python "$@"
+            '';
+          };
         };
 
         devShells.default = pkgs.mkShell {
           packages = [
-            emerge-env
+            emerge-dev-env
             pkgs.uv
             python.pkgs.pyqt5
           ]
@@ -247,6 +285,7 @@ in
             export QT_QPA_PLATFORM_PLUGIN_PATH="${qtPluginPath}"
             export PYTHONPATH="${pythonPath}:$PYTHONPATH"
             export EMERGE_PARDISO_PATH="${pardissoPath}"
+            export EMERGE_ENV="${emerge-env}"
           '';
         };
       };

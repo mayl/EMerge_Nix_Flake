@@ -22,9 +22,11 @@ After importing the module, every system in `perSystem` exposes:
 | Output | Description |
 |--------|-------------|
 | `packages.emerge` | The EMerge Python package (wheel) |
-| `packages.emerge-env` | Virtualenv with EMerge + all deps + UMFPACK extra |
-| `packages.run-emerge-simulation` | Shell wrapper — runs a `.py` file inside the venv with all required env vars set |
-| `devShells.default` | Shell with the venv, uv, PyQt5, and correct `LD_LIBRARY_PATH` / Qt / MKL env vars |
+| `packages.emerge-env` | Virtualenv with EMerge + all deps + UMFPACK extra (+ `emerge.extraDeps`) |
+| `packages.emerge-dev-env` | `emerge-env` + `emerge.devDeps`, from the same package set (the devshell's venv; the same derivation when `devDeps` is empty) |
+| `packages.run-emerge-simulation` | Shell wrapper — runs a `.py` file inside the venv with all required env vars set (incl. Qt/PyQt5 for the viewer) |
+| `packages.run-emerge-headless` | The same without Qt/PyQt5 (batch jobs, CI, cloud images): `emerge-env`, the OpenGL/X11 libs gmsh links, SuiteSparse, MKL |
+| `devShells.default` | Shell with `emerge-dev-env`, uv, PyQt5, and correct `LD_LIBRARY_PATH` / Qt / MKL env vars; `EMERGE_ENV` = the `emerge-env` path |
 
 ## Using the module in your own flake
 
@@ -134,6 +136,20 @@ After adding a package via `pythonOverlay`, make it available in the venv by als
 emerge.extraDeps = {
   "my-analysis-lib" = [ ];
   "h5py" = [ ];
+};
+```
+
+### `emerge.devDeps` — Python packages for the devshell only
+
+Test and development tools (pytest, linters) that the runners shouldn't carry. They go into
+`emerge-dev-env` = `emerge-env` + these, built from the same package set, so the two can't
+drift; `emerge-env`, `run-emerge-simulation` and `run-emerge-headless` don't get them. The
+devshell exports `EMERGE_ENV` (the `emerge-env` store path) so tools can name the runtime
+environment their code was developed against.
+
+```nix
+emerge.devDeps = {
+  "pytest" = [ ];
 };
 ```
 
