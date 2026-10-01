@@ -131,9 +131,19 @@ in
           echo "       (is mkl missing from emerge-env, or has its layout changed?)" >&2
           exit 1
         fi
+        # MKL's dispatcher loads libmkl_core, the threading layer etc. from the directory
+        # it was loaded from (here $out/lib, not the target's), so every library of the
+        # env goes next to it, not only libmkl_rt.
         mkdir -p $out/lib
+        for f in "$lib"/*; do ln -s "$(readlink -f "$f")" "$out/lib/$(basename "$f")"; done
         ln -s "$(readlink -f "$target")" $out/lib/libmkl_rt.so
-        test -e $out/lib/libmkl_rt.so
+        # Load it the way EMerge does: a version query makes MKL load its core library.
+        ${emerge-env}/bin/python -c '
+        import ctypes, sys
+        buf = ctypes.create_string_buffer(256)
+        ctypes.CDLL(sys.argv[1]).MKL_Get_Version_String(buf, 256)
+        print(buf.value.decode())
+        ' $out/lib/libmkl_rt.so
       '';
       pardissoPath =
         if cfg.pardissoPath != null then cfg.pardissoPath else "${pardiso-lib}/lib/libmkl_rt.so";
